@@ -91,10 +91,10 @@ router.get("/urban/stats", async (req, res) => {
 
     return res.json({
       ok: true,
-      totalLocations,
-      avgUrbanScore: stats.avgUrbanScore,
-      avgAirQuality: stats.avgAirQuality,
-      totalPopulation: stats.totalPopulation,
+      total_locations: totalLocations,
+      avg_urban_score: stats.avgUrbanScore,
+      avg_air_quality: stats.avgAirQuality,
+      total_population: stats.totalPopulation,
     });
   } catch (err) {
     console.error("urban/stats hatasi:", err);

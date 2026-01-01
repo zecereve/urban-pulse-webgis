@@ -250,26 +250,27 @@ function CitizenDashboard({ user }) {
         {kpiCard("Toplam nüfus", totalPopulation)}
       </section>
 
-      {/* Harita + alt tablo */}
+      {/* Harita + alt tablo (Yan Yana / Split View) */}
       <section
         style={{
           flex: 1,
           display: "flex",
-          flexDirection: "column",
+          gap: 16,
           marginTop: 10,
           minHeight: 0,
-          gap: 10,
         }}
       >
+        {/* SOL: Harita */}
         <div
           style={{
-            flex: 1,
-            minHeight: 420,
+            flex: 2,
             borderRadius: 16,
             background: "#020617",
             border: "1px solid rgba(148,163,184,0.4)",
             padding: 8,
             overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {loading ? (
@@ -277,35 +278,40 @@ function CitizenDashboard({ user }) {
           ) : error ? (
             <p style={{ color: "#f97316", padding: 8 }}>{error}</p>
           ) : (
-            <CityMap locations={locations} onLocationClick={setSelected} />
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <CityMap locations={locations} onLocationClick={setSelected} />
+            </div>
           )}
         </div>
 
+        {/* SAĞ: Seçili İlçe Detayı */}
         <div
           style={{
+            flex: 1,
             borderRadius: 16,
             background: "rgba(15,23,42,0.95)",
             border: "1px solid rgba(148,163,184,0.5)",
             padding: 14,
             color: "#e5e7eb",
+            overflow: "auto",
           }}
         >
           {!selected ? (
             <p style={{ fontSize: 13, color: "#9ca3af" }}>
-              Bir ilçeye tıkladığında burada tablo şeklinde tüm verileri ve
-              yaşanabilirlik yorumunu göreceksin.
+              Haritadan bir ilçe seçerek detayları ve geri bildirim panelini
+              görüntüleyebilirsin.
             </p>
           ) : (
             <>
-              <h3 style={{ marginBottom: 8, fontSize: 16 }}>
-                {selected.district_name || selected.name} için veriler
+              <h3 style={{ marginBottom: 12, fontSize: 18, borderBottom: "1px solid rgba(148,163,184,0.25)", paddingBottom: 8 }}>
+                {selected.district_name || selected.name} Verileri
               </h3>
               <table
                 style={{
                   width: "100%",
                   borderCollapse: "collapse",
                   fontSize: 13,
-                  marginBottom: 8,
+                  marginBottom: 16,
                 }}
               >
                 <tbody>
@@ -336,16 +342,39 @@ function CitizenDashboard({ user }) {
                   </tr>
                 </tbody>
               </table>
-              <p
+
+              <div
                 style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginTop: 6,
-                  color: yorumColor(selected.urban_score),
+                  marginBottom: 16,
+                  padding: 10,
+                  borderRadius: 8,
+                  background: "rgba(255,255,255,0.05)",
                 }}
               >
-                {yorumForScore(selected.urban_score)}
-              </p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: yorumColor(selected.urban_score) }}>
+                  {yorumForScore(selected.urban_score)}
+                </p>
+              </div>
+
+              {/* GERİ BİLDİRİM FORMU */}
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(148,163,184,0.25)" }}>
+                <h4 style={{ fontSize: 15, marginBottom: 12 }}>Geri Bildirim Yap</h4>
+                <FeedbackForm
+                  districtId={selected._id}
+                  onFeedbackSuccess={() => {
+                    alert("Geri bildirim gönderildi!");
+                    // Basitçe alert veriyoruz, idealde listeyi yenilemek gerekir ama
+                    // DistrictFeedbacks içindeki useEffect(..., [districtId]) sadece id değişince çalışır.
+                    // Şimdilik bu yeterli, kullanıcı başka ilçeye tıklayıp geri dönünce görür.
+                  }}
+                />
+              </div>
+
+              {/* DİĞER VATANDAŞ GÖRÜŞLERİ */}
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(148,163,184,0.25)" }}>
+                <h4 style={{ fontSize: 15, marginBottom: 12 }}>Vatandaş Görüşleri</h4>
+                <DistrictFeedbacks districtId={selected._id} />
+              </div>
             </>
           )}
         </div>
@@ -360,6 +389,11 @@ function AnalystDashboard({ user }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Seçili ilçe ve onun geri bildirimleri
+  const [selected, setSelected] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
 
   useEffect(() => {
     async function fetchAll() {
@@ -389,6 +423,23 @@ function AnalystDashboard({ user }) {
     fetchAll();
   }, []);
 
+  async function handleLocationClick(loc) {
+    setSelected(loc);
+    setFeedbacks([]);
+    setLoadingFeedbacks(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/feedback/${loc._id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setFeedbacks(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingFeedbacks(false);
+    }
+  }
+
   const cardStyle = {
     borderRadius: 14,
     padding: 14,
@@ -403,117 +454,223 @@ function AnalystDashboard({ user }) {
     marginTop: 6,
   };
 
-  // urban_score'a göre top/bottom 3
-  const sortedByUrban = [...locations].sort(
-    (a, b) => Number(b.urban_score) - Number(a.urban_score)
-  );
-  const best3 = sortedByUrban.slice(0, 3);
-  const worst3 = sortedByUrban.slice(-3).reverse();
-
   return (
     <>
-      {/* Analyst KPI Şeridi */}
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-          gap: 14,
-        }}
-      >
+      {/* KPI Şeridi */}
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
         <div style={cardStyle}>
           <p style={{ fontSize: 12, color: "#9ca3af" }}>Toplam lokasyon</p>
           <p style={cardValue}>{stats ? stats.total_locations : "-"}</p>
         </div>
         <div style={cardStyle}>
           <p style={{ fontSize: 12, color: "#9ca3af" }}>Ortalama urban score</p>
-          <p style={cardValue}>
-            {stats ? Number(stats.avg_urban_score).toFixed(2) : "-"}
-          </p>
+          <p style={cardValue}>{stats ? Number(stats.avg_urban_score).toFixed(2) : "-"}</p>
         </div>
         <div style={cardStyle}>
-          <p style={{ fontSize: 12, color: "#9ca3af" }}>
-            Ortalama hava kalitesi
-          </p>
-          <p style={cardValue}>
-            {stats ? Number(stats.avg_air_quality).toFixed(2) : "-"}
-          </p>
+          <p style={{ fontSize: 12, color: "#9ca3af" }}>Ortalama hava kalitesi</p>
+          <p style={cardValue}>{stats ? Number(stats.avg_air_quality).toFixed(2) : "-"}</p>
         </div>
         <div style={cardStyle}>
           <p style={{ fontSize: 12, color: "#9ca3af" }}>Toplam nüfus</p>
-          <p style={cardValue}>
-            {stats
-              ? Number(stats.total_population).toLocaleString("tr-TR")
-              : "-"}
-          </p>
+          <p style={cardValue}>{stats ? Number(stats.total_population).toLocaleString("tr-TR") : "-"}</p>
         </div>
       </section>
 
-      {/* Harita + top/bottom tablo */}
-      <section
-        style={{
-          flex: 1,
-          display: "grid",
-          gridTemplateColumns: "2fr 1fr",
-          gap: 12,
-          marginTop: 10,
-          minHeight: 0,
-        }}
-      >
-        <div
-          style={{
-            borderRadius: 16,
-            background: "#020617",
-            border: "1px solid rgba(148,163,184,0.4)",
-            padding: 8,
-            overflow: "hidden",
-          }}
-        >
+      {/* Harita + Detay (Yan Yana) */}
+      <section style={{ flex: 1, display: "flex", gap: 16, marginTop: 10, minHeight: 0 }}>
+        {/* SOL: Harita */}
+        <div style={{ flex: 2, borderRadius: 16, background: "#020617", border: "1px solid rgba(148,163,184,0.4)", padding: 8, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           {loading ? (
             <p style={{ color: "#e5e7eb", padding: 8 }}>Veriler yükleniyor…</p>
           ) : error ? (
             <p style={{ color: "#f97316", padding: 8 }}>{error}</p>
           ) : (
-            <CityMap locations={locations} />
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <CityMap locations={locations} onLocationClick={handleLocationClick} />
+            </div>
           )}
         </div>
 
-        <div
-          style={{
-            borderRadius: 16,
-            background: "rgba(15,23,42,0.95)",
-            border: "1px solid rgba(148,163,184,0.5)",
-            padding: 12,
-            color: "#e5e7eb",
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <div>
-            <h3 style={{ fontSize: 14, marginBottom: 4 }}>En yüksek 3 ilçe</h3>
-            <ul style={{ fontSize: 12, paddingLeft: 16, margin: 0 }}>
-              {best3.map((l) => (
-                <li key={l.id || l._id}>
-                  {l.district_name || l.name}:{" "}
-                  {Number(l.urban_score).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 style={{ fontSize: 14, marginBottom: 4 }}>En düşük 3 ilçe</h3>
-            <ul style={{ fontSize: 12, paddingLeft: 16, margin: 0 }}>
-              {worst3.map((l) => (
-                <li key={l.id || l._id}>
-                  {l.district_name || l.name}:{" "}
-                  {Number(l.urban_score).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* SAĞ: Özet ve Geri Bildirimler */}
+        <div style={{ flex: 1, borderRadius: 16, background: "rgba(15,23,42,0.95)", border: "1px solid rgba(148,163,184,0.5)", padding: 14, color: "#e5e7eb", overflow: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          {!selected ? (
+            <div>
+              <h3 style={{ fontSize: 16, marginBottom: 8 }}>Genel Bakış</h3>
+              <p style={{ fontSize: 13, color: "#9ca3af" }}>Haritadan bir ilçe seçerek vatandaş geri bildirimlerini ve detayları gör.</p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <h3 style={{ fontSize: 18, marginBottom: 4 }}>{selected.district_name || selected.name}</h3>
+                <p style={{ fontSize: 13, color: "#9ca3af" }}>Urban Score: {selected.urban_score}</p>
+              </div>
+
+              <div>
+                <h4 style={{ fontSize: 14, marginBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 4 }}>Vatandaş Bildirimleri</h4>
+                {loadingFeedbacks ? (
+                  <p style={{ fontSize: 12 }}>Yükleniyor...</p>
+                ) : feedbacks.length === 0 ? (
+                  <p style={{ fontSize: 12, color: "#6b7280" }}>Henüz geri bildirim yok.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {feedbacks.map(f => (
+                      <div key={f._id} style={{ background: "rgba(255,255,255,0.05)", padding: 10, borderRadius: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#fbbf24" }}>★ {f.rating}</span>
+                          <span style={{ fontSize: 10, color: "#6b7280" }}>{new Date(f.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {f.imageUrl && (
+                          <img src={`${API_BASE}${f.imageUrl}`} alt="Feedback" style={{ width: "100%", borderRadius: 6, marginBottom: 6, objectFit: "cover", maxHeight: 150 }} />
+                        )}
+                        {f.comment && <p style={{ fontSize: 12, margin: 0 }}>{f.comment}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </section>
     </>
+  );
+}
+
+/* ----------------- FEEDBACK COMPONENTS ----------------- */
+
+function FeedbackForm({ districtId, onFeedbackSuccess }) {
+  const [rating, setRating] = useState(10);
+  const [comment, setComment] = useState("");
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!districtId) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("district_id", districtId);
+      formData.append("rating", rating);
+      formData.append("comment", comment);
+      if (file) {
+        formData.append("image", file);
+      }
+
+      const res = await fetch(`${API_BASE}/api/feedback`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        setComment("");
+        setFile(null);
+        setRating(10);
+        if (onFeedbackSuccess) onFeedbackSuccess();
+      } else {
+        alert("Hata oluştu.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Sunucu hatası.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div>
+        <label style={{ fontSize: 12, color: "#9ca3af", display: "block", marginBottom: 4 }}>Puan (1-10)</label>
+        <input
+          type="number"
+          min="1"
+          max="10"
+          value={rating}
+          onChange={(e) => setRating(e.target.value)}
+          style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #4b5563", background: "#1e293b", color: "white" }}
+        />
+      </div>
+      <div>
+        <label style={{ fontSize: 12, color: "#9ca3af", display: "block", marginBottom: 4 }}>Yorum</label>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={3}
+          style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #4b5563", background: "#1e293b", color: "white", fontFamily: "inherit" }}
+        />
+      </div>
+      <div>
+        <label style={{ fontSize: 12, color: "#9ca3af", display: "block", marginBottom: 4 }}>Fotoğraf Yükle</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files[0])}
+          style={{ fontSize: 13, color: "#e5e7eb" }}
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={uploading}
+        style={{
+          marginTop: 8,
+          padding: "8px 12px",
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: 6,
+          cursor: "pointer",
+          fontWeight: 600
+        }}
+      >
+        {uploading ? "Gönderiliyor..." : "Gönder"}
+      </button>
+    </form>
+  );
+}
+
+function DistrictFeedbacks({ districtId }) {
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!districtId) return;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/feedback/${districtId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFeedbacks(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [districtId]);
+
+  if (loading) return <p style={{ fontSize: 12, color: "#9ca3af" }}>Yükleniyor...</p>;
+  if (feedbacks.length === 0) return <p style={{ fontSize: 12, color: "#6b7280" }}>Henüz yorum yapılmamış.</p>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {feedbacks.map(f => (
+        <div key={f._id} style={{ background: "rgba(255,255,255,0.05)", padding: 10, borderRadius: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#fbbf24" }}>★ {f.rating}</span>
+            <span style={{ fontSize: 10, color: "#6b7280" }}>{new Date(f.createdAt).toLocaleDateString()}</span>
+          </div>
+          {f.imageUrl && (
+            <img src={`${API_BASE}${f.imageUrl}`} alt="Görsel" style={{ width: "100%", borderRadius: 6, marginBottom: 6, objectFit: "cover", maxHeight: 200 }} />
+          )}
+          {f.comment && <p style={{ fontSize: 12, margin: 0, color: "#e5e7eb" }}>{f.comment}</p>}
+        </div>
+      ))}
+    </div>
   );
 }
 

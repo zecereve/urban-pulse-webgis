@@ -85,7 +85,7 @@ export default function AdminDashboard({ user }) {
       <div
         style={{
           flex: 2,
-          background: "white",
+          background: "rgba(15,23,42,0.9)",
           borderRadius: 12,
           padding: 16,
           display: "flex",
@@ -127,7 +127,8 @@ export default function AdminDashboard({ user }) {
       <div
         style={{
           flex: 1,
-          background: "white",
+          background: "rgba(15,23,42,0.9)",
+          color: "white",
           borderRadius: 12,
           padding: 16,
           display: "flex",
@@ -153,7 +154,7 @@ export default function AdminDashboard({ user }) {
                 marginBottom: 12,
                 padding: 8,
                 borderRadius: 8,
-                background: "#f9fafb",
+                background: "rgba(30, 41, 59, 0.8)",
                 fontSize: 13,
               }}
             >
@@ -207,7 +208,79 @@ export default function AdminDashboard({ user }) {
             </form>
           </>
         )}
+
+        {/* Geri Bildirim Moderasyonu */}
+        {selected && (
+          <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+            <h4 style={{ marginBottom: 12 }}>Geri Bildirimler</h4>
+            <AdminFeedbackList districtId={selected._id} />
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function AdminFeedbackList({ districtId }) {
+  const [feedbacks, setFeedbacks] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  const loadFeedbacks = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/feedback/${districtId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setFeedbacks(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [districtId]);
+
+  React.useEffect(() => {
+    loadFeedbacks();
+  }, [loadFeedbacks]);
+
+  async function updateStatus(id, status) {
+    if (!window.confirm(`Durumu '${status}' olarak değiştirmek istediğine emin misin?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/feedback/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        loadFeedbacks();
+      } else {
+        alert("Hata oluştu.");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  if (loading) return <p style={{ fontSize: 12 }}>Yükleniyor...</p>;
+  if (feedbacks.length === 0) return <p style={{ fontSize: 12, color: "#9ca3af" }}>Geri bildirim yok.</p>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {feedbacks.map(f => (
+        <div key={f._id} style={{ background: "rgba(0,0,0,0.2)", padding: 10, borderRadius: 6, borderLeft: f.status === "harmful" ? "4px solid red" : f.status === "useful" ? "4px solid green" : "4px solid grey" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9ca3af", marginBottom: 4 }}>
+            <span>Puan: {f.rating}</span>
+            <span>{new Date(f.createdAt).toLocaleDateString()}</span>
+          </div>
+          {f.imageUrl && <img src={`${API_BASE}${f.imageUrl}`} alt="img" style={{ width: 50, height: 50, objectFit: "cover", borderRadius: 4, marginBottom: 4 }} />}
+          <p style={{ fontSize: 12, margin: 0 }}>{f.comment}</p>
+          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+            <button onClick={() => updateStatus(f._id, "useful")} style={{ fontSize: 10, padding: "4px 8px", background: "#166534", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}>Yararlı</button>
+            <button onClick={() => updateStatus(f._id, "harmful")} style={{ fontSize: 10, padding: "4px 8px", background: "#991b1b", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}>Zararlı</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
