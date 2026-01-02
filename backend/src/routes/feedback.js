@@ -28,6 +28,39 @@ const upload = multer({ storage: storage });
 // POST /api/feedback
 // Body: { district_id, rating, comment }
 // File: image
+/**
+ * @swagger
+ * tags:
+ *   name: Feedback
+ *   description: Citizen feedback management
+ */
+
+/**
+ * @swagger
+ * /feedback:
+ *   post:
+ *     summary: Submit feedback for a district
+ *     tags: [Feedback]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               district_id:
+ *                 type: string
+ *               rating:
+ *                 type: integer
+ *               comment:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Feedback submitted
+ */
 router.post("/", upload.single("image"), async (req, res) => {
     try {
         const { district_id, rating, comment } = req.body;
@@ -62,6 +95,22 @@ router.post("/", upload.single("image"), async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /feedback/{districtId}:
+ *   get:
+ *     summary: Get all feedbacks for a specific district
+ *     tags: [Feedback]
+ *     parameters:
+ *       - in: path
+ *         name: districtId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of feedbacks
+ */
 // GET /api/feedback/:districtId
 router.get("/:districtId", async (req, res) => {
     try {
@@ -81,6 +130,33 @@ router.get("/:districtId", async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /feedback/{id}/status:
+ *   put:
+ *     summary: Update feedback status (Moderation)
+ *     tags: [Feedback]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [useful, harmful, pending]
+ *                 example: useful
+ *     responses:
+ *       200:
+ *         description: Status updated
+ */
 // PUT /api/feedback/:id/status
 router.put("/:id/status", async (req, res) => {
     try {

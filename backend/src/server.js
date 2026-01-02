@@ -14,6 +14,8 @@ const MONGO_URI =
   "mongodb+srv://ceremvermez_db_user:0611@cluster0.rsymqpq.mongodb.net/urban_pulse?retryWrites=true&w=majority&appName=Cluster0";
 const DB_NAME = "urban_pulse";
 
+const swaggerDocs = require("./swagger");
+
 let client;
 global.db = null;
 
@@ -25,6 +27,7 @@ async function start() {
 
     app.listen(PORT, () => {
       console.log(`API http://localhost:${PORT} uzerinde calisiyor`);
+      swaggerDocs(app, PORT);
     });
   } catch (err) {
     console.error("MongoDB baglanti hatasi:", err);
@@ -59,5 +62,7 @@ app.use("/uploads", express.static("uploads"));
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
+
+
 
 start();

@@ -21,6 +21,65 @@ router.get("/urban/locations", async (req, res) => {
   }
 });
 
+
+
+/**
+ * Yeni lokasyon ekle
+ * URL: POST http://localhost:5050/api/locations
+ */
+router.post("/locations", async (req, res) => {
+  try {
+    const { name, lat, lng, population } = req.body;
+
+    if (!name || !lat || !lng) {
+      return res.status(400).json({ error: "Isim, enlem ve boylam zorunludur." });
+    }
+
+    const locationsCol = global.db.collection("locations");
+    const newLocation = {
+      district_name: name,
+      latitude: Number(lat),
+      longitude: Number(lng),
+      population: Number(population) || 0,
+      urban_score: 5, // Varsayılanlar
+      air_quality: 50,
+      traffic_intensity: 5,
+      noise_level: 50,
+      updatedAt: new Date()
+    };
+
+    const result = await locationsCol.insertOne(newLocation);
+    newLocation._id = result.insertedId;
+
+    return res.json(newLocation);
+  } catch (err) {
+    console.error("Lokasyon ekleme hatasi:", err);
+    return res.status(500).json({ error: "Sunucu hatasi." });
+  }
+});
+
+/**
+ * Lokasyon sil
+ * URL: DELETE http://localhost:5050/api/locations/:id
+ */
+router.delete("/locations/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const locationsCol = global.db.collection("locations");
+
+    const result = await locationsCol.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Lokasyon bulunamadi." });
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("Lokasyon silme hatasi:", err);
+    return res.status(500).json({ error: "Sunucu hatasi." });
+  }
+});
+
 /**
  * Seçili lokasyonu güncelle
  * URL: PUT http://localhost:5050/api/locations/:id

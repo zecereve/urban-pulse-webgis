@@ -136,7 +136,16 @@ export default function AdminDashboard({ user }) {
           maxWidth: 420,
         }}
       >
-        <h3 style={{ marginBottom: 8 }}>Lokasyon Detayı</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <h3 style={{ margin: 0 }}>Lokasyon Detayı</h3>
+          <button
+            onClick={() => setSelected({ isNew: true })}
+            style={{ fontSize: 12, padding: "4px 8px", background: "#16a34a", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}
+          >
+            + Yeni Ekle
+          </button>
+        </div>
+
         {error && (
           <p style={{ color: "#b91c1c", fontSize: 13, marginBottom: 8 }}>
             {error}
@@ -147,6 +156,14 @@ export default function AdminDashboard({ user }) {
           <p style={{ fontSize: 13, color: "#6b7280" }}>
             Haritada bir ilçeye tıklayarak düzenlemeye başlayabilirsin.
           </p>
+        ) : selected.isNew ? (
+          <NewLocationForm
+            onCancel={() => setSelected(null)}
+            onSuccess={(newLoc) => {
+              setLocations([...locations, newLoc]);
+              setSelected(newLoc);
+            }}
+          />
         ) : (
           <>
             <div
@@ -188,29 +205,58 @@ export default function AdminDashboard({ user }) {
                 onChange={setUrbanScore}
               />
 
-              <button
-                type="submit"
-                disabled={saving}
-                style={{
-                  marginTop: 12,
-                  width: "100%",
-                  padding: "10px 12px",
-                  backgroundColor: "#2563eb",
-                  color: "white",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                {saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
-              </button>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    backgroundColor: "#2563eb",
+                    color: "white",
+                    borderRadius: 8,
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  {saving ? "Kaydediliyor..." : "Kaydet"}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm("Bu lokasyonu silmek istediğine emin misin?")) return;
+                    try {
+                      const res = await fetch(`${API_BASE}/api/locations/${selected._id}`, { method: "DELETE" });
+                      if (res.ok) {
+                        setLocations(locations.filter(l => l._id !== selected._id));
+                        setSelected(null);
+                      } else {
+                        alert("Silinemedi.");
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                  style={{
+                    padding: "10px 12px",
+                    backgroundColor: "#dc2626",
+                    color: "white",
+                    borderRadius: 8,
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Sil
+                </button>
+              </div>
             </form>
           </>
         )}
 
         {/* Geri Bildirim Moderasyonu */}
-        {selected && (
+        {selected && !selected.isNew && (
           <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
             <h4 style={{ marginBottom: 12 }}>Geri Bildirimler</h4>
             <AdminFeedbackList districtId={selected._id} />
@@ -218,6 +264,53 @@ export default function AdminDashboard({ user }) {
         )}
       </div>
     </div>
+  );
+}
+
+function NewLocationForm({ onCancel, onSuccess }) {
+  const [name, setName] = React.useState("");
+  const [lat, setLat] = React.useState("");
+  const [lng, setLng] = React.useState("");
+  const [pop, setPop] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/locations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, lat, lng, population: pop })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onSuccess(data);
+      } else {
+        alert(data.error || "Hata");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h4 style={{ marginBottom: 12 }}>Yeni Lokasyon Ekle</h4>
+      <LabelInput label="İlçe Adı" value={name} onChange={setName} />
+      <div style={{ display: "flex", gap: 8 }}>
+        <LabelInput label="Enlem (Lat)" value={lat} onChange={setLat} />
+        <LabelInput label="Boylam (Lng)" value={lng} onChange={setLng} />
+      </div>
+      <LabelInput label="Nüfus" value={pop} onChange={setPop} />
+
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button type="button" onClick={onCancel} style={{ padding: "8px", flex: 1, background: "#4b5563", color: "white", border: "none", borderRadius: 6, cursor: "pointer" }}>İptal</button>
+        <button type="submit" disabled={loading} style={{ padding: "8px", flex: 1, background: "#16a34a", color: "white", border: "none", borderRadius: 6, cursor: "pointer" }}>{loading ? "Ekleniyor..." : "Ekle"}</button>
+      </div>
+    </form>
   );
 }
 
@@ -298,7 +391,7 @@ function LabelInput({ label, value, onChange }) {
         {label}
       </label>
       <input
-        type="number"
+        type={label.includes("Lat") || label.includes("Lng") ? "number" : "text"}
         step="any"
         value={value}
         onChange={(e) => onChange(e.target.value)}
