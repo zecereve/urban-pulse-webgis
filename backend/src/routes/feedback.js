@@ -111,6 +111,18 @@ router.post("/", upload.single("image"), async (req, res) => {
  *       200:
  *         description: List of feedbacks
  */
+// GET /api/feedback/all (Global list for Admin)
+router.get("/all", async (req, res) => {
+    try {
+        const feedbacksCol = global.db.collection("feedbacks");
+        const items = await feedbacksCol.find({}).sort({ createdAt: -1 }).toArray();
+        res.json(items);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch all feedbacks" });
+    }
+});
+
 // GET /api/feedback/:districtId
 router.get("/:districtId", async (req, res) => {
     try {

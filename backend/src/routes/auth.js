@@ -31,6 +31,8 @@ const router = express.Router();
  *       401:
  *         description: Invalid credentials
  */
+const bcrypt = require("bcrypt");
+
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
@@ -45,10 +47,15 @@ router.post("/login", async (req, res) => {
     const usersCol = global.db.collection("users");
     const user = await usersCol.findOne({ email });
 
-    if (!user || user.password !== password) {
-      return res
-        .status(401)
-        .json({ message: "Geçersiz kullanıcı veya şifre." });
+    if (!user) {
+      return res.status(401).json({ message: "Geçersiz kullanıcı veya şifre." });
+    }
+
+    // Check if password matches (bcrypt compare)
+    // Fallback for simple plaintext if needed (but we strictly want bcrypt now)
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ message: "Geçersiz kullanıcı veya şifre." });
     }
 
     return res.json({
@@ -66,37 +73,12 @@ router.post("/login", async (req, res) => {
 });
 
 // POST /api/auth/register
-/**
- * @swagger
- * /auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: User created
- *       400:
- *         description: Invalid input or user exists
- */
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "E-posta ve şifre zorunludur." });
+      return res.status(400).json({ message: "E-posta ve şifre zorunludur." });
     }
 
     const usersCol = global.db.collection("users");
@@ -106,11 +88,12 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Bu e-posta zaten kullanılıyor." });
     }
 
-    // GÜVENLİK: Role her zaman "citizen" olarak ayarlanır.
-    // Dışarıdan "admin" gönderilse bile yoksayılır.
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = {
       email,
-      password, // Gerçek uygulamada hashlenmelidir (bcrypt)
+      password: hashedPassword,
       role: "citizen",
       createdAt: new Date()
     };
@@ -132,5 +115,33 @@ router.post("/register", async (req, res) => {
   }
 });
 
+
+// GET /api/auth/users (Admin only ideally, but loose for now)
+router.get("/users", async (req, res) => {
+  try {
+    const usersCol = global.db.collection("users");
+    const users = await usersCol.find({}).toArray();
+    // Remove passwords
+    const safeUsers = users.map(u => ({ _id: u._id, email: u.email, role: u.role, createdAt: u.createdAt }));
+    res.json(safeUsers);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// DELETE /api/auth/users/:id
+const { ObjectId } = require("mongodb");
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usersCol = global.db.collection("users");
+    await usersCol.deleteOne({ _id: new ObjectId(id) });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
 
 module.exports = router;

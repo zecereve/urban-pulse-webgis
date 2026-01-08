@@ -55,6 +55,10 @@ app.use("/api", adminRouter);
 // Feedback API
 app.use("/api/feedback", feedbackRouter);
 
+// Issues API
+const issuesRouter = require("./routes/issues");
+app.use("/api/issues", issuesRouter);
+
 // Uploads klasörünü dışarı aç (Resimleri görmek için)
 app.use("/uploads", express.static("uploads"));
 
