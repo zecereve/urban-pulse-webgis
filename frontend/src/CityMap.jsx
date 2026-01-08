@@ -48,6 +48,16 @@ export default function CityMap({ locations = [], onLocationClick, issueMode, on
     shadowSize: [41, 41]
   });
 
+  // Green icon for resolved issues
+  const resolvedIcon = L.icon({
+    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
   function MapEvents() {
     const map = useMapEvents({
       click(e) {
@@ -140,7 +150,7 @@ export default function CityMap({ locations = [], onLocationClick, issueMode, on
         <Marker
           key={issue._id}
           position={[issue.latitude, issue.longitude]}
-          icon={issueIcon}
+          icon={issue.status === "resolved" ? resolvedIcon : issueIcon}
           eventHandlers={{
             click: () => {
               if (onIssueClick) onIssueClick(issue);

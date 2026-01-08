@@ -21,16 +21,44 @@ export default function RecommendationWizard({ locations, onClose, onSelect }) {
         // Noise: Lower better
 
         const scored = locations.map(loc => {
-            const airScore = Math.max(0, 100 - Number(loc.air_quality || 50));
-            const trafficScore = Math.max(0, (10 - Number(loc.traffic_intensity || 5)) * 10);
-            const noiseScore = Math.max(0, 100 - Number(loc.noise_level || 50));
-            const urbanScore = Number(loc.urban_score || 5) * 10;
+            // Normalize values to 0-100 scale where 100 is BEST
 
-            const totalScore =
-                (airScore * (weights.air / 100)) +
-                (trafficScore * (weights.traffic / 100)) +
-                (noiseScore * (weights.noise / 100)) +
-                (urbanScore * (weights.urban / 100));
+            // Air Quality: 0 (Good) to 100+ (Bad). 
+            // We want score: 0 (Bad) to 100 (Good).
+            // Formula: max(0, 100 - val)
+            const airVal = Number(loc.air_quality || 50);
+            const airScore = Math.max(0, 100 - airVal);
+
+            // Traffic: 1 (Low) to 10 (High).
+            // We want score: 100 (Low Traffic) to 0 (High Traffic).
+            // Formula: (10 - val) * (100/9) roughly, or just simple inversion mapping
+            const trafficVal = Number(loc.traffic_intensity || 5);
+            // Map 1..10 -> 100..0
+            // 10 - 1 = 9 range. (10-val)/9 * 100? Let's keep simple: (10-val)*10
+            const trafficScore = Math.max(0, Math.min(100, (10 - trafficVal) * 11));
+
+            // Noise: 30dB (Good) to 90dB+ (Bad).
+            // Let's assume range 30-90.
+            // If val < 30 -> 100. If val > 90 -> 0.
+            const noiseVal = Number(loc.noise_level || 50);
+            const noiseScore = Math.max(0, Math.min(100, 100 - ((noiseVal - 30) * (100 / 60))));
+
+            // Urban Score: 1 (Bad) to 10 (Good).
+            // Map 1..10 -> 0..100
+            const urbanVal = Number(loc.urban_score || 5);
+            const urbanScore = Math.max(0, Math.min(100, urbanVal * 10));
+
+            const totalWeight = weights.air + weights.traffic + weights.noise + weights.urban || 1;
+
+            // Weighted Average
+            const totalScore = (
+                (airScore * weights.air) +
+                (trafficScore * weights.traffic) +
+                (noiseScore * weights.noise) +
+                (urbanScore * weights.urban)
+            ) / totalWeight;
+
+            console.log(`Calc for ${loc.name}: Air:${airScore} Traf:${trafficScore} Noise:${noiseScore} Urb:${urbanScore} => ${totalScore}`);
 
             return { ...loc, matchScore: totalScore };
         });

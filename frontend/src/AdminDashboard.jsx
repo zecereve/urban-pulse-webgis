@@ -462,7 +462,7 @@ function AdminFeedbackList({ districtId }) {
   const loadFeedbacks = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/feedback/${districtId}`);
+      const res = await fetch(`${API_BASE}/api/feedback/${districtId}?includeHarmful=true`);
       if (res.ok) {
         const data = await res.json();
         setFeedbacks(data);

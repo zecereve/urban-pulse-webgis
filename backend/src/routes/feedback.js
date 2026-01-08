@@ -127,11 +127,18 @@ router.get("/all", async (req, res) => {
 router.get("/:districtId", async (req, res) => {
     try {
         const { districtId } = req.params;
+        const { includeHarmful } = req.query;
         const feedbacksCol = global.db.collection("feedbacks");
+
+        // Build query
+        const query = { district_id: new ObjectId(districtId) };
+        if (includeHarmful !== "true") {
+            query.status = { $ne: "harmful" };
+        }
 
         // İlgili ilçeye ait yorumları getir (en yeniden eskiye)
         const items = await feedbacksCol
-            .find({ district_id: new ObjectId(districtId) })
+            .find(query)
             .sort({ createdAt: -1 })
             .toArray();
 
