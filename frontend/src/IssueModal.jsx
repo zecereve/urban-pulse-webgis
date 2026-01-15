@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const API_BASE = "";
+const API_BASE = "/api";
 
 export default function IssueModal(props) {
     const { latlng, onClose, onSuccess } = props;
@@ -24,7 +24,7 @@ export default function IssueModal(props) {
             }
             if (file) formData.append('image', file);
 
-            const res = await fetch(`${API_BASE}/api/issues`, {
+            const res = await fetch(`${API_BASE}/issues`, {
                 method: 'POST',
                 body: formData
             });

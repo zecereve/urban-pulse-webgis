@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, CheckCircle, XCircle, User, AlertTriangle, MessageSquare, MapPin } from "lucide-react";
 import CityMap from "./CityMap";
 
-const API_BASE = "";
+const API_BASE = "/api";
 
 export default function AdminDashboard({ user }) {
   const [activeTab, setActiveTab] = useState("overview"); // overview, users, issues, feedbacks
@@ -25,7 +25,7 @@ export default function AdminDashboard({ user }) {
 
   async function fetchLocations() {
     try {
-      const res = await fetch(`${API_BASE}/api/urban/locations`);
+      const res = await fetch(`${API_BASE}/urban/locations`);
       if (res.ok) setLocations(await res.json());
     } catch (e) { console.error(e); }
   }
@@ -40,7 +40,7 @@ export default function AdminDashboard({ user }) {
 
   async function fetchStats() {
     try {
-      const res = await fetch(`${API_BASE}/api/urban/stats`);
+      const res = await fetch(`${API_BASE}/urban/stats`);
       setStats(await res.json());
     } catch (e) { console.error(e); }
   }
@@ -51,7 +51,7 @@ export default function AdminDashboard({ user }) {
       // We need a route for this. Let's assume /api/auth/users exists or we create it.
       // If not exists, I might need to create it. I'll check auth.js later.
       // For now, let's assume it exists or I'll mock it if it fails.
-      const res = await fetch(`${API_BASE}/api/auth/users`);
+      const res = await fetch(`${API_BASE}/auth/users`);
       if (res.ok) setUsers(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -60,7 +60,7 @@ export default function AdminDashboard({ user }) {
   async function fetchIssues() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/issues`);
+      const res = await fetch(`${API_BASE}/issues`);
       if (res.ok) setIssues(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -71,7 +71,7 @@ export default function AdminDashboard({ user }) {
   async function fetchFeedbacks() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/feedback/all`);
+      const res = await fetch(`${API_BASE}/feedback/all`);
       if (res.ok) setFeedbacks(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -82,7 +82,7 @@ export default function AdminDashboard({ user }) {
     if (!selected) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/api/locations/${selected._id}`, {
+      const res = await fetch(`${API_BASE}/locations/${selected._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

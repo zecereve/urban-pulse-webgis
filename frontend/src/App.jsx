@@ -9,7 +9,7 @@ import IssueModal from "./IssueModal";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { LayoutDashboard, Map as MapIcon, BarChart3, Users, Wind, Activity } from 'lucide-react';
 
-const API_BASE = "";
+const API_BASE = "/api";
 
 /* ------------ GENEL LAYOUT (SIDEBAR + HEADER) ------------ */
 function Layout({ user, onLogout, children }) {
@@ -156,7 +156,7 @@ function CitizenDashboard({ user }) {
       try {
         setError("");
         setLoading(true);
-        const res = await fetch(`${API_BASE}/api/urban/locations?_t=${Date.now()}`);
+        const res = await fetch(`${API_BASE}/urban/locations?_t=${Date.now()}`);
         const data = await res.json();
         if (!res.ok) {
           setError(data.error || "Veri alınamadı.");
@@ -171,7 +171,7 @@ function CitizenDashboard({ user }) {
     }
     const fetchIssues = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/issues`);
+        const res = await fetch(`${API_BASE}/issues`);
         if (res.ok) setIssues(await res.json());
       } catch (e) { console.error(e); }
     };
@@ -624,9 +624,9 @@ function AnalystDashboard({ user }) {
         setError("");
         setLoading(true);
         const [locRes, statsRes, issuesRes] = await Promise.all([
-          fetch(`${API_BASE}/api/urban/locations?_t=${Date.now()}`),
-          fetch(`${API_BASE}/api/urban/stats`),
-          fetch(`${API_BASE}/api/issues`),
+          fetch(`${API_BASE}/urban/locations?_t=${Date.now()}`),
+          fetch(`${API_BASE}/urban/stats`),
+          fetch(`${API_BASE}/issues`),
         ]);
         const locData = await locRes.json();
         const statsData = await statsRes.json();
@@ -650,7 +650,7 @@ function AnalystDashboard({ user }) {
     setFeedbacks([]);
     setLoadingFeedbacks(true);
     try {
-      const res = await fetch(`${API_BASE}/api/feedback/${loc._id}`);
+      const res = await fetch(`${API_BASE}/feedback/${loc._id}`);
       const data = await res.json();
       if (res.ok) setFeedbacks(data);
     } catch (err) { console.error(err); }
@@ -915,7 +915,7 @@ function FeedbackForm({ districtId, onFeedbackSuccess }) {
         formData.append("image", file);
       }
 
-      const res = await fetch(`${API_BASE}/api/feedback`, {
+      const res = await fetch(`${API_BASE}/feedback`, {
         method: "POST",
         body: formData,
       });
@@ -996,7 +996,7 @@ function DistrictFeedbacks({ districtId }) {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/feedback/${districtId}`);
+        const res = await fetch(`${API_BASE}/feedback/${districtId}`);
         if (res.ok) {
           const data = await res.json();
           setFeedbacks(data);

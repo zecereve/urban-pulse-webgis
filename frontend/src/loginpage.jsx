@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import logo from "./img/logo.png"; // logo: frontend/src/img/logo.png
 
-const API_BASE = "";
+const API_BASE = "/api";
 
 export default function LoginPage({ onLoginSuccess }) {
   const [mode, setMode] = useState("login");
@@ -19,7 +19,7 @@ export default function LoginPage({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -43,7 +43,7 @@ export default function LoginPage({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/register`, {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
