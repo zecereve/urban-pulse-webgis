@@ -11,6 +11,10 @@ const options = {
         },
         servers: [
             {
+                url: "http://51.20.188.13:5050/api",
+                description: "Production Server (AWS)",
+            },
+            {
                 url: "http://localhost:5050/api",
                 description: "Local Development Server",
             },
