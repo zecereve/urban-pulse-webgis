@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Performance Test Results</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: white; }
+        .container { width: 800px; margin: 0 auto; }
+        h2 { text-align: center; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Urban Pulse API - Load Test Performance</h2>
+        <canvas id="perfChart"></canvas>
+    </div>
+    <script>
+        const ctx = document.getElementById('perfChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ["0s","10s","20s","30s","40s","50s","60s","70s","80s","90s","100s","110s","120s"],
+                datasets: [
+                    {
+                        label: 'Response Time (p95, ms)',
+                        data: [804.5,284.3,172.5,169,175.9,202.4,347.3,301.9,539.2,257.3,301.9,320.6,308],
+                        borderColor: 'rgb(255, 99, 132)',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Virtual Users',
+                        data: [62,146,221,296,374,448,499,500,500,500,500,500,104],
+                        borderColor: 'rgb(54, 162, 235)',
+                        yAxisID: 'y1',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                stacked: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Response Time (ms)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Active Users' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

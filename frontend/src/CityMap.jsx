@@ -35,11 +35,11 @@ function getColor(score) {
 
 export default function CityMap({ locations = [], onLocationClick, issueMode, onMapClick, issues = [], onIssueClick }) {
   const center = [39.9334, 32.8597]; // Ankara
+  const [filterType, setFilterType] = React.useState('all');
 
   // E.g. red icon for issues
   const issueIcon = L.icon({
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png", // Use standard for now, but maybe color filter in CSS? 
-    // Or finding a red marker URL
+    // Using a red marker URL
     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
     iconSize: [25, 41],
@@ -146,31 +146,62 @@ export default function CityMap({ locations = [], onLocationClick, issueMode, on
       })}
 
       {/* Issue Markers */}
-      {issues.map((issue) => (
-        <Marker
-          key={issue._id}
-          position={[issue.latitude, issue.longitude]}
-          icon={issue.status === "resolved" ? resolvedIcon : issueIcon}
-          eventHandlers={{
-            click: () => {
-              if (onIssueClick) onIssueClick(issue);
-            }
-          }}
-        >
-          <Popup>
-            <div style={{ fontSize: 13, minWidth: 150 }}>
-              <strong>Sorun: {issue.type}</strong>
-              <p style={{ margin: '4px 0', color: '#666' }}>{issue.description}</p>
-              {issue.imageUrl && (
-                <img src={`http://localhost:5050${issue.imageUrl}`} alt="Görsel" style={{ width: '100%', marginTop: 4, borderRadius: 4 }} />
-              )}
-              <div style={{ marginTop: 4, fontSize: 11, color: '#999' }}>
-                Durum: {issue.status}
+      {issues
+        .filter(issue => filterType === 'all' || issue.type === filterType)
+        .map((issue) => (
+          <Marker
+            key={issue._id}
+            position={[issue.latitude, issue.longitude]}
+            icon={issue.status === "resolved" ? resolvedIcon : issueIcon}
+            eventHandlers={{
+              click: () => {
+                if (onIssueClick) onIssueClick(issue);
+              }
+            }}
+          >
+            <Popup>
+              <div style={{ fontSize: 13, minWidth: 150 }}>
+                <strong>Sorun: {issue.type}</strong>
+                <p style={{ margin: '4px 0', color: '#666' }}>{issue.description}</p>
+                {issue.imageUrl && (
+                  <img src={`http://localhost:5050${issue.imageUrl}`} alt="Görsel" style={{ width: '100%', marginTop: 4, borderRadius: 4 }} />
+                )}
+                <div style={{ marginTop: 4, fontSize: 11, color: '#999' }}>
+                  Durum: {issue.status}
+                </div>
               </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+            </Popup>
+          </Marker>
+        ))}
+
+      {/* Filter Control UI */}
+      {issueMode && (
+        <div style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          zIndex: 1000,
+          background: 'white',
+          padding: 10,
+          borderRadius: 8,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+        }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 5 }}>Filtrele:</label>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            style={{ padding: 5, borderRadius: 4, border: '1px solid #ccc' }}
+          >
+            <option value="all">Tüm Sorunlar</option>
+            <option value="pothole">Çukur / Yol</option>
+            <option value="lighting">Aydınlatma</option>
+            <option value="garbage">Çöp</option>
+            <option value="traffic">Trafik</option>
+            <option value="park">Park / Yeşil Alan</option>
+            <option value="other">Diğer</option>
+          </select>
+        </div>
+      )}
 
     </MapContainer>
   );

@@ -81,6 +81,9 @@ http://localhost:5050/api-docs
 
 Includes schemas for Users, Locations, and Feedbacks
 
+![API Documentation](./screenshots/swagger.png)
+*Figure 1: Swagger UI showing available API endpoints*
+
 ✏️ CRUD Functionality
 
 Full Create / Read / Update / Delete (CRUD) operations
@@ -88,6 +91,12 @@ Full Create / Read / Update / Delete (CRUD) operations
 Applied to the locations collection
 
 Accessible only by Admin users
+
+### Geographic Data Filtering
+Users can filter issues displayed on the map by type (e.g., Pothole, Traffic, Lighting) using the interactive dropdown menu.
+
+![Filtering Interface](./screenshots/filtering.png)
+*Figure 2: Filtering issues by 'Pothole' type*
 
 🗣️ Citizen Feedback System
 
@@ -152,6 +161,9 @@ Results
 Success Rate: 100%
 
 Requests Per Second (RPS): ~350 req/s (local environment)
+
+![Load Test Result](./screenshots/performance.png)
+*Figure 3: Artillery Load Test Results showing Response Time (p95) vs Virtual Users*
 
 Conclusion
 
