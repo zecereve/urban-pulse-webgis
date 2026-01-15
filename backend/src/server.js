@@ -37,10 +37,11 @@ async function start() {
 app.use(
   cors({
     origin: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+app.options("*", cors());
+// app.options line removed (optional, but restoring to exact previous state)
 app.use(express.json());
 
 // Routes
@@ -60,12 +61,12 @@ app.get("/api/health", (req, res) => {
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   // Set static folder
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.use(express.static(path.join(__dirname, '../public')));
 
   app.get('*', (req, res) => {
     // Exclude API routes from this catch-all
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return res.status(404).json({ error: "Not found" });
-    res.sendFile(path.resolve(__dirname, '../', 'frontend', 'dist', 'index.html'));
+    res.sendFile(path.resolve(__dirname, '../', 'public', 'index.html'));
   });
 }
 

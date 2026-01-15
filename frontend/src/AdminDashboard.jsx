@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, CheckCircle, XCircle, User, AlertTriangle, MessageSquare, MapPin } from "lucide-react";
 import CityMap from "./CityMap";
 
-const API_BASE = "/api";
+const API_BASE = "";
 
 export default function AdminDashboard({ user }) {
   const [activeTab, setActiveTab] = useState("overview"); // overview, users, issues, feedbacks
@@ -25,7 +25,7 @@ export default function AdminDashboard({ user }) {
 
   async function fetchLocations() {
     try {
-      const res = await fetch(`${API_BASE}/urban/locations`);
+      const res = await fetch(`${API_BASE}/api/urban/locations`);
       if (res.ok) setLocations(await res.json());
     } catch (e) { console.error(e); }
   }
@@ -40,7 +40,7 @@ export default function AdminDashboard({ user }) {
 
   async function fetchStats() {
     try {
-      const res = await fetch(`${API_BASE}/urban/stats`);
+      const res = await fetch(`${API_BASE}/api/urban/stats`);
       setStats(await res.json());
     } catch (e) { console.error(e); }
   }
@@ -51,7 +51,7 @@ export default function AdminDashboard({ user }) {
       // We need a route for this. Let's assume /api/auth/users exists or we create it.
       // If not exists, I might need to create it. I'll check auth.js later.
       // For now, let's assume it exists or I'll mock it if it fails.
-      const res = await fetch(`${API_BASE}/auth/users`);
+      const res = await fetch(`${API_BASE}/api/auth/users`);
       if (res.ok) setUsers(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -60,7 +60,7 @@ export default function AdminDashboard({ user }) {
   async function fetchIssues() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/issues`);
+      const res = await fetch(`${API_BASE}/api/issues?_t=${Date.now()}`);
       if (res.ok) setIssues(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -71,7 +71,7 @@ export default function AdminDashboard({ user }) {
   async function fetchFeedbacks() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/feedback/all`);
+      const res = await fetch(`${API_BASE}/api/feedback/all`);
       if (res.ok) setFeedbacks(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -82,7 +82,7 @@ export default function AdminDashboard({ user }) {
     if (!selected) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/locations/${selected._id}`, {
+      const res = await fetch(`${API_BASE}/api/locations/${selected._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -114,14 +114,14 @@ export default function AdminDashboard({ user }) {
   async function handleDeleteUser(id) {
     if (!window.confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
     try {
-      const res = await fetch(`${API_BASE}/api/auth/users/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/api/auth/users/${id}`, { method: "DELETE" });
       if (res.ok) fetchUsers();
     } catch (e) { console.error(e); }
   }
 
   async function handleUpdateIssueStatus(id, status) {
     try {
-      const res = await fetch(`${API_BASE}/api/issues/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/api/issues/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -227,7 +227,7 @@ export default function AdminDashboard({ user }) {
                           if (!window.confirm("Bu kaydı kalıcı olarak silmek istiyor musunuz?")) return;
 
                           try {
-                            const res = await fetch(`${API_BASE}/api/issues/${selectedIssue._id}`, { method: "DELETE" });
+                            const res = await fetch(`${API_BASE}/api/api/issues/${selectedIssue._id}`, { method: "DELETE" });
                             if (res.ok) {
                               setSelectedIssue(null);
                               fetchIssues();
@@ -404,12 +404,12 @@ export default function AdminDashboard({ user }) {
                           <div style={{ display: "flex", gap: 8 }}>
                             <button onClick={async () => {
                               if (!window.confirm("Yararlı olarak işaretlensin mi?")) return;
-                              await fetch(`${API_BASE}/api/feedback/${f._id}/status`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "useful" }) });
+                              await fetch(`${API_BASE}/api/api/feedback/${f._id}/status`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "useful" }) });
                               fetchFeedbacks();
                             }} style={{ padding: "4px 8px", background: "#166534", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 11 }}>Yararlı</button>
                             <button onClick={async () => {
                               if (!window.confirm("Zararlı olarak işaretlensin mi?")) return;
-                              await fetch(`${API_BASE}/api/feedback/${f._id}/status`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "harmful" }) });
+                              await fetch(`${API_BASE}/api/api/feedback/${f._id}/status`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "harmful" }) });
                               fetchFeedbacks();
                             }} style={{ padding: "4px 8px", background: "#991b1b", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 11 }}>Zararlı</button>
                           </div>
@@ -462,7 +462,7 @@ function AdminFeedbackList({ districtId }) {
   const loadFeedbacks = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/feedback/${districtId}?includeHarmful=true`);
+      const res = await fetch(`${API_BASE}/api/api/feedback/${districtId}?includeHarmful=true`);
       if (res.ok) {
         const data = await res.json();
         setFeedbacks(data);
@@ -481,7 +481,7 @@ function AdminFeedbackList({ districtId }) {
   async function updateStatus(id, status) {
     if (!window.confirm(`Durumu '${status}' olarak değiştirmek istediğine emin misin?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/api/feedback/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/api/feedback/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
