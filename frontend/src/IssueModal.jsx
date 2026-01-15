@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const API_BASE = "http://51.20.188.13:5050";
+const API_BASE = "";
 
 export default function IssueModal(props) {
     const { latlng, onClose, onSuccess } = props;

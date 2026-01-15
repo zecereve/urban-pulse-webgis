@@ -164,7 +164,7 @@ export default function CityMap({ locations = [], onLocationClick, issueMode, on
                 <strong>Sorun: {issue.type}</strong>
                 <p style={{ margin: '4px 0', color: '#666' }}>{issue.description}</p>
                 {issue.imageUrl && (
-                  <img src={`http://51.20.188.13:5050${issue.imageUrl}`} alt="Görsel" style={{ width: '100%', marginTop: 4, borderRadius: 4 }} />
+                  <img src={`${issue.imageUrl}`} alt="Görsel" style={{ width: '100%', marginTop: 4, borderRadius: 4 }} />
                 )}
                 <div style={{ marginTop: 4, fontSize: 11, color: '#999' }}>
                   Durum: {issue.status}
