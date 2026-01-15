@@ -36,7 +36,7 @@ async function start() {
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL ? [process.env.CLIENT_URL] : ["http://localhost:5174", "http://localhost:5173", "http://localhost:5050"],
+    origin: process.env.CLIENT_URL ? [process.env.CLIENT_URL] : ["http://localhost:5174", "http://localhost:5173", "http://localhost:5050", "http://51.20.188.13:5173", "http://51.20.188.13:5050"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import logo from "./img/logo.png"; // logo: frontend/src/img/logo.png
 
-const API_BASE = "http://localhost:5050";
+const API_BASE = "http://51.20.188.13:5050";
 
 export default function LoginPage({ onLoginSuccess }) {
   const [mode, setMode] = useState("login");

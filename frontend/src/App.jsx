@@ -9,7 +9,7 @@ import IssueModal from "./IssueModal";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { LayoutDashboard, Map as MapIcon, BarChart3, Users, Wind, Activity } from 'lucide-react';
 
-const API_BASE = "http://localhost:5050";
+const API_BASE = "http://51.20.188.13:5050";
 
 /* ------------ GENEL LAYOUT (SIDEBAR + HEADER) ------------ */
 function Layout({ user, onLogout, children }) {

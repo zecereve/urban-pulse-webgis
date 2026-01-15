@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, CheckCircle, XCircle, User, AlertTriangle, MessageSquare, MapPin } from "lucide-react";
 import CityMap from "./CityMap";
 
-const API_BASE = "http://localhost:5050";
+const API_BASE = "http://51.20.188.13:5050";
 
 export default function AdminDashboard({ user }) {
   const [activeTab, setActiveTab] = useState("overview"); // overview, users, issues, feedbacks
