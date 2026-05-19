@@ -18,20 +18,32 @@ const DB_NAME = "urban_pulse";
 let client;
 global.db = null;
 
-async function start() {
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected) return;
   try {
     client = await MongoClient.connect(MONGO_URI);
     global.db = client.db(DB_NAME);
+    isConnected = true;
     console.log("MongoDB baglandi");
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`API http://51.20.188.13:${PORT} uzerinde calisiyor`);
-      swaggerDocs(app, PORT);
-    });
   } catch (err) {
     console.error("MongoDB baglanti hatasi:", err);
-    process.exit(1);
   }
+}
+
+// Vercel'de her istekte veri tabanının bağlı olduğundan emin oluyoruz
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+async function start() {
+  await connectDB();
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`API http://localhost:${PORT} uzerinde calisiyor`);
+    swaggerDocs(app, PORT);
+  });
 }
 
 app.use(
@@ -41,7 +53,6 @@ app.use(
   })
 );
 app.options("*", cors());
-// app.options line removed (optional, but restoring to exact previous state)
 app.use(express.json());
 
 // Routes
@@ -60,14 +71,16 @@ app.get("/api/health", (req, res) => {
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
-  // Set static folder
   app.use(express.static(path.join(__dirname, '../public')));
-
   app.get('*', (req, res) => {
-    // Exclude API routes from this catch-all
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return res.status(404).json({ error: "Not found" });
     res.sendFile(path.resolve(__dirname, '../', 'public', 'index.html'));
   });
 }
 
-start();
+// Sadece lokalde çalıştırırken app.listen yap, Vercel için app'i dışa aktar
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  start();
+}
+
+module.exports = app;
