@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect } from "react";
-import LoginPage from "./LoginPage";
+import LoginPage from "./loginpage";
 import CityMap from "./CityMap";
 import AdminDashboard from "./AdminDashboard"; // Updated component
 import DistrictRadarChart from "./DistrictRadarChart";
